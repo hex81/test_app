@@ -1,0 +1,509 @@
+{% extends "base.html" %}
+{% import "bootstrap/wtf.html" as wtf %}
+{% import "_macros.html" as macros %}
+
+{% block title %}TestApp{% endblock %}
+
+{% block page_content %}
+<div class="page-header">
+    <h1 align="center">Test Failed Records</h1>
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Edit Record</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="case_modal" class="col-form-label">Case:</label>
+                            <input type="hidden" id="id_modal" name="id_modal">
+                            <input type="text" readonly class="form-control" id="case_modal">
+                        </div>
+                        <div class="mb-3">
+                            <label for="category_modal" class="col-form-label">Category:</label>
+                            <input type="text" class="form-control" id="category_modal">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nvbug_modal" class="col-form-label">NvBug:</label>
+                            <input type="text" class="form-control" id="nvbug_modal">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <submit type="button" class="btn btn-success" id="editButton">Save</submit>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="form-group form-inline">
+        <select data-live-search="true" id="version" class="form-control form-select" title="Version">
+            {% if version_list %}
+            <option selected="selected" value="{{ version_list[0] }}">{{ version_list[0] }}
+            </option>
+            {% for i in range(1, version_list | length) %}
+            <option value="{{ version_list[i] }}">{{ version_list[i] }}</option>
+            {% endfor %}
+            {% endif %}
+        </select>
+        <select data-live-search="true" id="trt" class="form-control form-select" title="TensorRT">
+            <option value="">ALL</option>
+            {% for row in trt_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+        <select data-live-search="true" id="cuda" class="form-control form-select" title="CUDA">
+            <option value="">ALL</option>
+            {% for row in cuda_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+        <select data-live-search="true" id="gpu" class="form-control form-select" title="GPU">
+            <option value="">ALL</option>
+            {% for row in gpu_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+        <select data-live-search="true" id="os" class="form-control form-select" title="OS">
+            <option value="">ALL</option>
+            {% for row in os_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+        <select data-live-search="true" id="arch" class="form-control form-select" title="Arch">
+            <option value="">ALL</option>
+            {% for row in arch_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+        <select data-live-search="true" id="category" class="form-control form-select" title="Category">
+            <option value="">ALL</option>
+            {% for row in category_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+        <select data-live-search="true" id="case_name" class="form-control form-select" title="Case">
+            <option value="">ALL</option>
+            {% for row in case_list %}
+            <option value="{{ row }}">{{ row }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div>
+        <table class="table table-striped table-hover" style="word-break:break-all">
+            <thead>
+                <tr>
+                    <!-- <th scope="col">#</th> -->
+                    <th scope="col" width="200px">Job</th>
+                    <th scope="col" width="250px">Case Name</th>
+                    <th scope="col">TensorRT</th>
+                    <th scope="col">Driver</th>
+                    <th scope="col">CUDA</th>
+                    <th scope="col">CUDNN</th>
+                    <th scope="col">GPU</th>
+                    <th scope="col">OS</th>
+                    <th scope="col">Arch</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">NvBug</th>
+                    <th scope="col">Edit</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in data %}
+                <tr>
+                    <td scope="row" hidden="hidden">{{ row.id }}</td>
+                    <td>{{ row.job }}</td>
+                    <td><a href="{{ row.url }}">{{ row.case_name }}</a></td>
+                    <td>{{ row.trt }}</td>
+                    <td>{{ row.driver }}</td>
+                    <td>{{ row.cuda }}</td>
+                    <td>{{ row.cudnn }}</td>
+                    <td>{{ row.platform }}</td>
+                    <td>{{ row.os }}</td>
+                    <td>{{ row.arch }}</td>
+                    <td>{{ row.category }}</td>
+                    <td>{{ row.nvbug }}</td>
+                    <td>
+                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#editModal">
+                            Edit
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% if pagination %}
+<div class="pagination" id="page" name="page">
+    {{ pagination.links }}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    $(document).ready(function () {
+        $(document).on('click', "#editButton", function (event) {
+            event.preventDefault();
+            var case_id = $("#id_modal").val()
+            var category = $("#category_modal").val()
+            var nvbug = $("#nvbug_modal").val()
+            // or call the save function here
+            edit(case_id, category, nvbug);
+            alert(case_id + category + nvbug);
+            $(this).prev().click();
+            history.go(0);
+        });
+
+        $(document).on('show.bs.modal', '#editModal', function () {
+            $tr = $(event.target).closest('tr');
+            var data = $tr.children("td").map(function () {
+                return $(this).text();
+            }).get();
+
+            $('#id_modal').val(data[0]);
+            $('#case_modal').val(data[2]);
+            $('#category_modal').val(data[10]);
+            $('#nvbug_modal').val(data[11]);
+        });
+
+        $("#version").selectpicker();
+        $("#trt").selectpicker();
+        $("#cuda").selectpicker();
+        $("#gpu").selectpicker();
+        $("#os").selectpicker();
+        $("#arch").selectpicker();
+        $("#category").selectpicker();
+        $("#case_name").selectpicker();
+
+        function edit(id, category, nvbug) {
+            $.ajax({
+                url: "/edit",
+                method: "POST",
+                data: { 
+                    id: id,
+                    category: category,
+                    nvbug: nvbug
+                },
+                dataType: "json",
+                success: function (data) {
+                    alert('ok')
+                }
+            });
+        }
+
+        function change_version(version) {
+            $.ajax({
+                url: "/change_version",
+                method: "POST",
+                data: { version: version },
+                dataType: "json",
+                success: function (data) {
+                    var trt_list = data.trt;
+                    var cuda_list = data.cuda;
+                    var gpu_list = data.gpu;
+                    var os_list = data.os;
+                    var arch_list = data.arch;
+                    var category_list = data.category;
+                    var case_list = data.cases;
+                    var html = '<option value="">All</option>';
+                    var trt_html = html;
+                    var cuda_html = html;
+                    var gpu_html = html;
+                    var os_html = html;
+                    var arch_html = html;
+                    var category_html = html;
+                    var case_html = html;
+
+                    for (var count = 0; count < trt_list.length; count++) {
+                        trt_html += '<option value="' + trt_list[count] + '">' + trt_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < cuda_list.length; count++) {
+                        cuda_html += '<option value="' + cuda_list[count] + '">' + cuda_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < gpu_list.length; count++) {
+                        gpu_html += '<option value="' + gpu_list[count] + '">' + gpu_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < os_list.length; count++) {
+                        os_html += '<option value="' + os_list[count] + '">' + os_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < arch_list.length; count++) {
+                        arch_html += '<option value="' + arch_list[count] + '">' + arch_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < category_list.length; count++) {
+                        category_html += '<option value="' + category_list[count] + '">' + category_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < case_list.length; count++) {
+                        case_html += '<option value="' + case_list[count] + '">' + case_list[count] + '</option>'
+                    }
+
+                    $("#trt").html(trt_html);
+                    $("#trt").selectpicker('refresh');
+                    $("#cuda").html(cuda_html);
+                    $("#cuda").selectpicker('refresh');
+                    $("#gpu").html(gpu_html);
+                    $("#gpu").selectpicker('refresh');
+                    $("#os").html(os_html);
+                    $("#os").selectpicker('refresh');
+                    $("#arch").html(arch_html);
+                    $("#arch").selectpicker('refresh');
+                    $("#category").html(category_html);
+                    $("#category").selectpicker('refresh');
+                    $("#case_name").html(case_html);
+                    $("#case_name").selectpicker('refresh');
+                },
+            });
+        }
+
+        function change_filter(version, trt, cuda, gpu, os, arch, category, case_name) {
+            alert('change filter')
+            $.ajax({
+                url: "/change_filter",
+                method: "POST",
+                data: {
+                    version: version,
+                    trt: trt,
+                    cuda: cuda,
+                    gpu: gpu,
+                    os: os
+                },
+                dataType: "json",
+                success: function (data) {
+                    var trt_list = data.trt;
+                    var cuda_list = data.cuda;
+                    var gpu_list = data.gpu;
+                    var os_list = data.os;
+                    var arch_list = data.arch;
+                    var category_list = data.category;
+                    var case_list = data.cases;
+                    var html = '<option value="">All</option>';
+                    var trt_html = html;
+                    var cuda_html = html;
+                    var gpu_html = html;
+                    var os_html = html;
+                    var arch_html = html;
+                    var category_html = html;
+                    var case_html = html;
+                    alert(arch_list);
+
+                    for (var count = 0; count < trt_list.length; count++) {
+                        trt_html += '<option value="' + trt_list[count] + '">' + trt_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < cuda_list.length; count++) {
+                        cuda_html += '<option value="' + cuda_list[count] + '">' + cuda_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < gpu_list.length; count++) {
+                        gpu_html += '<option value="' + gpu_list[count] + '">' + gpu_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < os_list.length; count++) {
+                        os_html += '<option value="' + os_list[count] + '">' + os_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < arch_list.length; count++) {
+                        arch_html += '<option value="' + arch_list[count] + '">' + arch_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < category_list.length; count++) {
+                        category_html += '<option value="' + category_list[count] + '">' + category_list[count] + '</option>'
+                    }
+                    for (var count = 0; count < case_list.length; count++) {
+                        case_html += '<option value="' + case_list[count] + '">' + case_list[count] + '</option>'
+                    }
+
+                    if (trt == '') {
+                        $("#trt").html(trt_html);
+                        $("#trt").selectpicker('refresh');
+                    }
+                    if (cuda == '') {
+                        $("#cuda").html(cuda_html);
+                        $("#cuda").selectpicker('refresh');
+                    }
+                    if (gpu == '') {
+                        $("#gpu").html(gpu_html);
+                        $("#gpu").selectpicker('refresh');
+                    }
+                    if (os == '') {
+                        $("#os").html(os_html);
+                        $("#os").selectpicker('refresh');
+                    }
+                    if (arch == '') {
+                        $("#arch").html(arch_html);
+                        $("#arch").selectpicker('refresh');
+                    }
+                    if (category == '') {
+                        $("#category").html(category_html);
+                        $("#category").selectpicker('refresh');
+                    }
+                    if (case_name == '') {
+                        $("#case_name").html(case_html);
+                        $("#case_name").selectpicker('refresh');
+                    }
+                },
+            });
+        }
+
+        function load_data(url = '/load_data', version = '', trt = '', cuda = '', gpu = '', os = '', arch = '', category = '', case_name = '') {
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: {
+                    version: version,
+                    trt: trt,
+                    cuda: cuda,
+                    gpu: gpu,
+                    os: os,
+                    arch: arch,
+                    category: category,
+                    case_name: case_name
+                },
+                dataType: "json",
+                success: function (data) {
+                    $("tbody").html(data);
+                    $("tbody").append(data.recordhtml);
+                    $("#page").html(data);
+                    $("#page").append(data.pagehtml);
+                },
+            });
+        }
+
+        $(document).on("change", "#version", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            change_version(version);
+            load_data(url = '/load_data', version);
+        });
+
+        $(document).on("change", "#trt", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on("change", "#cuda", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on("change", "#gpu", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on("change", "#os", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on("change", "#arch", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on("change", "#category", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            alert(category)
+
+            // change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on("change", "#case_name", function () {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            alert(case_name)
+
+            // change_filter(version, trt, cuda, gpu, os, arch, category, case_name);
+            load_data(url = '/load_data', version, trt, cuda, gpu, os, arch, category, case_name);
+        });
+
+        $(document).on('click', 'ul.pagination li a', function (e) {
+            var version = $("#version").val()
+            var trt = $("#trt").val()
+            var cuda = $("#cuda").val()
+            var gpu = $("#gpu").val()
+            var os = $("#os").val()
+            var arch = $("#arch").val()
+            var category = $("#category").val()
+            var case_name = $("#case_name").val()
+
+            var target_url = $(this).attr('href')
+
+            if (target_url.includes('load_data')) {
+                // change target url behaviour
+                load_data(url = target_url, version, trt, cuda, gpu, os, arch, category, case_name);
+                // prevent default behaviour
+                event.preventDefault();
+            }
+        });
+    });
+</script>
+
+{% endblock %}

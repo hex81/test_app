@@ -1,0 +1,21 @@
+{% for row in data %}
+<tr>
+    <td scope="row" hidden="hidden">{{ row.id }}</td>
+    <td>{{ row.job }}</td>
+    <td><a href="{{ row.url }}">{{ row.case_name }}</a></td>
+    <td>{{ row.trt }}</td>
+    <td>{{ row.driver }}</td>
+    <td>{{ row.cuda }}</td>
+    <td>{{ row.cudnn }}</td>
+    <td>{{ row.platform }}</td>
+    <td>{{ row.os }}</td>
+    <td>{{ row.arch }}</td>
+    <td>{{ row.category }}</td>
+    <td>{{ row.nvbug }}</td>
+    <td>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#editModal">
+            Edit
+        </button>
+    </td>
+</tr>
+{% endfor %}
