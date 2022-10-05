@@ -17,7 +17,7 @@ class Config:
     # FLASKY_MAIL_SENDER = 'FLASKY ADMIN <flasky@emc.com>'
     # FLASKY_ADMIN = 'xin.he@emc.com'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    RECORD_PER_PAGE = 20
+    RECORD_PER_PAGE = 50
     # FLASKY_FOLLOWERS_PER_PAGE = 10
     # FLASKY_COMMENTS_PER_PAGE = 10
 
