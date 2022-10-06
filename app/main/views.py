@@ -97,9 +97,38 @@ def edit():
 
         TRTFailedRecord.update_case(id, category, nvbug)
 
-        print(id)
-
     return jsonify('save ok.')
+
+
+@main.route('/batch_edit_bug', methods=['GET', 'POST'])
+def batch_edit_bug():
+    if request.method == 'POST':
+        ids = request.form['ids']
+        nvbug = request.form['nvbug']
+
+        if len(ids) == 0:
+            return jsonify('update bug failed.')
+
+        for id in ids.split(","):
+            TRTFailedRecord.update_case(id=id, nvbug=nvbug)
+
+    return jsonify('update bug ok.')
+
+
+@main.route('/batch_edit_category', methods=['GET', 'POST'])
+def batch_edit_category():
+    if request.method == 'POST':
+        ids = request.form['ids']
+        category = request.form['category']
+
+        if len(ids) == 0:
+            flash('Please choose one item.')
+            return jsonify('update category failed.')
+
+        for id in ids.split(","):
+            TRTFailedRecord.update_case(id=id, category=category)
+
+    return jsonify('update category ok.')
 
 
 def get_filter_data(version, trt, cuda, gpu, os):

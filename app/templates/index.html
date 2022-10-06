@@ -6,6 +6,54 @@
 {% block page_content %}
 <div class="page-header">
     <h1 align="center">Test Failed Records</h1>
+    <div class="modal fade" id="batchEditBugModal" tabindex="-1" aria-labelledby="batchEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Edit Record</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <input type="hidden" id="batch_id_modal" name="batch_id_modal">
+                        </div>
+                        <div class="mb-3">
+                            <label for="nvbug_modal" class="col-form-label">NvBug:</label>
+                            <input type="text" class="form-control" id="batch_nvbug_modal">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="batchEditBugButton">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="modal fade" id="batchEditCategoryModal" tabindex="-1" aria-labelledby="batchEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Edit Record</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <input type="hidden" id="batch_category_id" name="batch_id_modal">
+                        </div>
+                        <div class="mb-3">
+                            <label for="batch_category_modal" class="col-form-label">Category:</label>
+                            <input type="text" class="form-control" id="batch_category_modal">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="batchEditCategoryButton">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -36,6 +84,7 @@
             </div>
         </div>
     </div>
+    <br/>
     <div class="form-group form-inline">
         <select data-live-search="true" id="version" class="form-control form-select" title="Version">
             {% for row in version_list %}
@@ -85,13 +134,23 @@
             {% endfor %}
         </select>
     </div>
+    <br/>
+    <div class="form-group form-inline">
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#batchEditBugModal">
+            Batch Edit Bug
+        </button>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#batchEditCategoryModal">
+            Batch Edit Category
+        </button>
+    </div>
+    <br/>
     <div>
-        <table class="table table-striped table-hover" style="word-break:break-all">
+        <table class="table table-striped table-hover" style="word-break:break-word">
             <thead>
                 <tr>
-                    <!-- <th scope="col">#</th> -->
+                    <th scope="col"><input type="checkbox" name="select-all" id="select-all" /></th>
                     <th scope="col" width="200px">Job</th>
-                    <th scope="col" width="250px">Case Name</th>
+                    <th scope="col" width="200px">Case Name</th>
                     <th scope="col">TensorRT</th>
                     <th scope="col">Driver</th>
                     <th scope="col">CUDA</th>
@@ -107,7 +166,8 @@
             <tbody>
                 {% for row in data %}
                 <tr>
-                    <td scope="row" hidden="hidden">{{ row.id }}</td>
+<!--                    <td scope="row" hidden="hidden">{{ row.id }}</td>-->
+                    <td><input id="check_item" type="checkbox" value="{{ row.id }}" ></td>
                     <td>{{ row.job }}</td>
                     <td><a href="{{ row.url }}">{{ row.case_name }}</a></td>
                     <td>{{ row.trt }}</td>
@@ -155,14 +215,65 @@
 
         $(document).on('show.bs.modal', '#editModal', function () {
             $tr = $(event.target).closest('tr');
+            var idx = $tr.children("td").find("input").val();
             var data = $tr.children("td").map(function () {
                 return $(this).text();
             }).get();
 
-            $('#id_modal').val(data[0]);
+            $('#id_modal').val(idx);
             $('#case_modal').val(data[2]);
             $('#category_modal').val(data[10]);
             $('#nvbug_modal').val(data[11]);
+        });
+
+        $(document).on('show.bs.modal', '#batchEditBugModal', function () {
+            var checkedVals = $("input[id='check_item']:checked").map(function() {
+                return this.value;
+            }).get();
+            $('#batch_id_modal').val(checkedVals.join(","));
+        });
+
+        $(document).on('click', "#batchEditBugButton", function (event) {
+            event.preventDefault();
+            var case_ids = $("#batch_id_modal").val()
+            var nvbug = $("#batch_nvbug_modal").val()
+            if (case_ids.length > 0) {
+                batch_edit_bug(case_ids, nvbug);
+                window.location.reload();
+            } else {
+                alert("Please choose one item.");
+            }
+        });
+
+        $(document).on('show.bs.modal', '#batchEditCategoryModal', function () {
+            var checkedVals = $("input[id='check_item']:checked").map(function() {
+                return this.value;
+            }).get();
+            $('#batch_category_id').val(checkedVals.join(","));
+        });
+
+        $(document).on('click', "#batchEditCategoryButton", function (event) {
+            event.preventDefault();
+            var case_ids = $("#batch_category_id").val()
+            var category = $("#batch_category_modal").val()
+            if (case_ids.length > 0) {
+                batch_edit_category(case_ids, category);
+                window.location.reload();
+            } else {
+                alert("Please choose one item.");
+            }
+        });
+
+        $(document).on('click', "#select-all", function(event) {
+            if(this.checked) {
+                $(':checkbox').each(function() {
+                    this.checked = true;
+                });
+            } else {
+                $(':checkbox').each(function() {
+                    this.checked = false;
+                });
+            }
         });
 
         $("#version").selectpicker();
@@ -185,6 +296,37 @@
                 },
                 dataType: "json",
                 success: function (data) {
+                    console.log(data);
+                }
+            });
+        }
+
+        function batch_edit_bug(ids, nvbug) {
+            $.ajax({
+                url: "/batch_edit_bug",
+                method: "POST",
+                data: {
+                    ids: ids,
+                    nvbug: nvbug
+                },
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
+                }
+            });
+        }
+
+        function batch_edit_category(ids, category) {
+            $.ajax({
+                url: "/batch_edit_category",
+                method: "POST",
+                data: {
+                    ids: ids,
+                    category: category
+                },
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
                 }
             });
         }
@@ -241,6 +383,7 @@
         $(document).on("change", "#case_name", function () {
             filter_data();
         });
+
     });
 </script>
 {% endblock %}
