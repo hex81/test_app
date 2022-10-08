@@ -54,6 +54,36 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="batchCreateBugModal" tabindex="-1" aria-labelledby="batchCreateBugModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Create Bug</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="bug_title_modal" class="col-form-label">Title:</label>
+                            <input type="hidden" id="batch_bug_ids_modal" name="batch_bug_ids_modal">
+                            <input type="text" class="form-control" id="batch_bug_title_modal">
+                        </div>
+                        <div class="mb-3">
+                            <label for="batch_bug_env_modal" class="col-form-label">Environment:</label>
+                            <textarea type="text" rows="10" class="form-control" id="batch_bug_env_modal"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="batch_bug_des_modal" class="col-form-label">Description:</label>
+                            <textarea type="text" rows="15" class="form-control" id="batch_bug_des_modal"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="batchCreateBugButton">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -84,6 +114,37 @@
             </div>
         </div>
     </div>
+    <div class="modal fade" id="bugModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4>Create Bug</h4>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <div class="mb-3">
+                            <label for="bug_title_modal" class="col-form-label">Title:</label>
+                            <input type="hidden" id="bug_id_modal" name="bug_id_modal">
+                            <input type="text" class="form-control" id="bug_title_modal">
+                        </div>
+                        <div class="mb-3">
+                            <label for="bug_env_modal" class="col-form-label">Environment:</label>
+                            <textarea type="text" rows="10" class="form-control" id="bug_env_modal"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="bug_des_modal" class="col-form-label">Description:</label>
+                            <textarea type="text" rows="15" class="form-control" id="bug_des_modal"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-success" id="bugButton">Submit</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <br/>
     <br/>
     <div class="form-group form-inline">
         <select data-live-search="true" id="version" class="form-control form-select" title="Version">
@@ -142,6 +203,9 @@
         <button type="button" class="btn btn-success" data-toggle="modal" data-target="#batchEditCategoryModal">
             Batch Edit Category
         </button>
+        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#batchCreateBugModal">
+            Batch Create Bug
+        </button>
     </div>
     <br/>
     <div>
@@ -161,6 +225,7 @@
                     <th scope="col">Category</th>
                     <th scope="col">NvBug</th>
                     <th scope="col">Edit</th>
+                    <th scope="col">Create Bug</th>
                 </tr>
             </thead>
             <tbody>
@@ -184,6 +249,11 @@
                             Edit
                         </button>
                     </td>
+                    <td>
+                        <button type="button" class="btn btn-success" data-toggle="modal" data-target="#bugModal">
+                           Create Bug
+                        </button>
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
@@ -202,6 +272,23 @@
 {{ super() }}
 <script>
     $(document).ready(function () {
+        function reloadPage() {
+            setTimeout(function () {
+                location.reload();
+            }, 1000)
+        }
+
+        $(document).on('click', "#bugButton", function (event) {
+            event.preventDefault();
+            var bug_id = $("#bug_id_modal").val()
+            var bug_title = $("#bug_title_modal").val()
+            var bug_env = $("#bug_env_modal").val()
+            var bug_des = $("#bug_des_modal").val()
+            create_bug(bug_id, bug_title, bug_env, bug_des);
+            $(this).prev().click();
+            history.go(0);
+        });
+
         $(document).on('click', "#editButton", function (event) {
             event.preventDefault();
             var case_id = $("#id_modal").val()
@@ -226,6 +313,41 @@
             $('#nvbug_modal').val(data[11]);
         });
 
+        $(document).on('show.bs.modal', '#bugModal', function () {
+            $tr = $(event.target).closest('tr');
+            var idx = $tr.children("td").find("input").val();
+            var case_log = $tr.children("td").find("a").attr('href');
+            var data = $tr.children("td").map(function () {
+                return $(this).text();
+            }).get();
+
+            var job_name = data[1];
+            var case_name = data[2];
+            var trt_version = data[3];
+            var driver_version = data[4];
+            var cuda_version = data[5];
+            var cudnn_version = data[6];
+            var gpu = data[7];
+            var os = data[8];
+            var arch = data[9];
+
+            var env_info = "TensorRT: " + trt_version + "\n" +
+                           "Driver: " + driver_version + "\n" +
+                           "CUDA: " + cuda_version + "\n" +
+                           "CUDNN: " + cudnn_version + "\n" +
+                           "GPU: " + gpu + "\n" +
+                           "OS: " + os + "\n" +
+                           "ARCH: " + arch + "\n";
+
+            var des_info = "Job url: " + job_name + "\n" +
+                           "Case name: " + case_name + "\n" +
+                           "Case log: " + case_log + "\n";
+
+            $('#bug_id_modal').val(idx);
+            $('#bug_env_modal').val(env_info);
+            $('#bug_des_modal').val(des_info);
+        });
+
         $(document).on('show.bs.modal', '#batchEditBugModal', function () {
             var checkedVals = $("input[id='check_item']:checked").map(function() {
                 return this.value;
@@ -239,7 +361,8 @@
             var nvbug = $("#batch_nvbug_modal").val()
             if (case_ids.length > 0) {
                 batch_edit_bug(case_ids, nvbug);
-                window.location.reload();
+                // location.reload() can't load whole page.
+                reloadPage();
             } else {
                 alert("Please choose one item.");
             }
@@ -258,7 +381,30 @@
             var category = $("#batch_category_modal").val()
             if (case_ids.length > 0) {
                 batch_edit_category(case_ids, category);
-                window.location.reload();
+                reloadPage();
+            } else {
+                alert("Please choose one item.");
+            }
+        });
+
+        $(document).on('show.bs.modal', '#batchCreateBugModal', function () {
+            var checkedVals = $("input[id='check_item']:checked").map(function() {
+                return this.value;
+            }).get();
+            $('#batch_bug_ids_modal').val(checkedVals.join(","));
+            get_info(checkedVals.join(","));
+        });
+
+        $(document).on('click', "#batchCreateBugButton", function (event) {
+            event.preventDefault();
+            var case_ids = $("#batch_bug_ids_modal").val()
+            var bug_title = $("#batch_bug_title_modal").val()
+            var bug_env = $("#batch_bug_env_modal").val()
+            var bug_des = $("#batch_bug_des_modal").val()
+
+            if (case_ids.length > 0) {
+                create_bug(case_ids, bug_title, bug_env, bug_des);
+                reloadPage();
             } else {
                 alert("Please choose one item.");
             }
@@ -297,6 +443,35 @@
                 dataType: "json",
                 success: function (data) {
                     console.log(data);
+                }
+            });
+        }
+
+        function create_bug(ids, title, environment, description) {
+            $.ajax({
+                url: "/create_bug",
+                method: "POST",
+                data: {
+                    ids: ids,
+                    title: title,
+                    environment: environment,
+                    description: description
+                },
+                dataType: "json",
+                success: function (data) {
+                    console.log(data);
+                }
+            });
+        }
+
+        function get_info(ids) {
+            $.ajax({
+                url: "/get_info?ids=" + ids,
+                method: "GET",
+                dataType: "json",
+                success: function (data) {
+                    $('#batch_bug_env_modal').val(data['environment']);
+                    $('#batch_bug_des_modal').val(data['description']);
                 }
             });
         }

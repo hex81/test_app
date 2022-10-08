@@ -3,6 +3,7 @@
 # Create by hex7 at 11/22/18
 #
 
+import time
 from flask import render_template, session, redirect, url_for, flash, abort
 from flask import request, current_app, make_response, jsonify
 from flask_paginate import Pagination
@@ -122,13 +123,84 @@ def batch_edit_category():
         category = request.form['category']
 
         if len(ids) == 0:
-            flash('Please choose one item.')
             return jsonify('update category failed.')
 
         for id in ids.split(","):
             TRTFailedRecord.update_case(id=id, category=category)
 
     return jsonify('update category ok.')
+
+
+@main.route('/create_bug', methods=['GET', 'POST'])
+def create_bug():
+    if request.method == 'POST':
+        ids = request.form['ids']
+        title = request.form['title']
+        environment = request.form['environment']
+        description = request.form['description']
+
+        if len(ids) == 0:
+            return jsonify('Please choose one case.')
+
+        # create bug and get bug id
+        nvbug = int(time.time() / 1000)
+        # TODO: if create bug successfully, save bug id into database.
+        for id in ids.split(","):
+            TRTFailedRecord.update_case(id=id, nvbug=nvbug)
+
+    return jsonify('update create bug ok.')
+
+
+@main.route('/get_info', methods=['GET', 'POST'])
+def get_info():
+
+    trt_list = set()
+    driver_list = set()
+    cuda_list = set()
+    cudnn_list = set()
+    os_list = set()
+    arch_list = set()
+    gpu_list = set()
+    log_list = set()
+    case_list = set()
+
+    if request.method == 'GET':
+        ids = request.args['ids']
+
+        if len(ids) == 0:
+            return jsonify('Please choose one case.')
+
+        id_list = ids.split(",")
+        records = TRTFailedRecord.query.filter(TRTFailedRecord.id.in_(id_list))
+
+        for record in records:
+            trt_list.add(record.trt)
+            driver_list.add(record.driver)
+            cuda_list.add(record.cuda)
+            cudnn_list.add(record.cudnn)
+            gpu_list.add(record.platform)
+            os_list.add(record.os)
+            arch_list.add(record.arch)
+            log_list.add(record.url)
+            case_list.add(record.case_name)
+
+    env_info = "TensorRT: " + ", ".join(trt_list) + "\n" + \
+               "Driver: " + ", ".join(driver_list) + "\n" + \
+               "CUDA: " + ", ".join(cuda_list) + "\n" + \
+               "CUDNN: " + ", ".join(cudnn_list) + "\n" + \
+               "GPU: " + ", ".join(gpu_list) + "\n" + \
+               "OS: " + ", ".join(os_list) + "\n" + \
+               "ARCH: " + ", ".join(arch_list) + "\n"
+
+    des_info = "Cases:\n" + "\n".join(case_list) + "\n\n" + \
+               "Log:\n" + "\n".join(log_list) + "\n"
+
+    data = {
+        "environment": env_info,
+        "description": des_info
+    }
+
+    return jsonify(data)
 
 
 def get_filter_data(version, trt, cuda, gpu, os):
