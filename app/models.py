@@ -1,4 +1,3 @@
-from platform import platform
 from . import db
 # from . import login_manager
 # from werkzeug.security import generate_password_hash, check_password_hash
@@ -60,12 +59,15 @@ class TRTFailedRecord(db.Model):
         return
 
     @staticmethod
-    def update_case(id, category, nvbug):
+    def update_case(id, category=None, nvbug=None):
         record = TRTFailedRecord.query.filter_by(id=id).first()
 
         if record:
-            record.category = category
-            record.nvbug = nvbug 
+            if category:
+                record.category = category
+
+            if nvbug:
+                record.nvbug = nvbug
 
             db.session.add(record)
             db.session.commit()
