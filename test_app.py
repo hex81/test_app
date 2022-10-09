@@ -4,7 +4,7 @@
 #
 
 from app import create_app, db
-from app.models import TRTFailedRecord
+from app.models import Role, User, TRTFailedRecord
 from flask_migrate import Migrate
 
 app = create_app('production')
@@ -13,7 +13,7 @@ migrate = Migrate(app, db)
 
 @app.shell_context_processor
 def make_shell_context():
-    return dict(db=db, User=TRTFailedRecord)
+    return dict(db=db, Role=Role, User=User, TRTFailedRecord=TRTFailedRecord)
 
 
 if __name__ == '__main__':

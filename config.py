@@ -15,11 +15,9 @@ class Config:
     # MAIL_USE_TLS = 'true'
     # FLASKY_MAIL_SUBJECT_PREFIX = '[Flasky]'
     # FLASKY_MAIL_SENDER = 'FLASKY ADMIN <flasky@emc.com>'
-    # FLASKY_ADMIN = 'xin.he@emc.com'
+    APP_ADMIN = 'hexin0922@hotmail.com'
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     RECORD_PER_PAGE = 50
-    # FLASKY_FOLLOWERS_PER_PAGE = 10
-    # FLASKY_COMMENTS_PER_PAGE = 10
 
     def __init__(self):
         pass
