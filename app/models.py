@@ -1,4 +1,3 @@
-from platform import platform
 from . import db
 # from . import login_manager
 # from werkzeug.security import generate_password_hash, check_password_hash
