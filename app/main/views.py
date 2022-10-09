@@ -153,7 +153,6 @@ def create_bug():
 
 @main.route('/get_info', methods=['GET', 'POST'])
 def get_info():
-
     trt_list = set()
     driver_list = set()
     cuda_list = set()
